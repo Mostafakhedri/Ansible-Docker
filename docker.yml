@@ -1,0 +1,52 @@
+---
+  - hosts: all
+    become: true
+
+    vars:
+      package_remove:
+        - docker
+        - docker-engine
+        - docker.io
+        - containerd
+        - runc
+
+    tasks:
+
+      - name: Remove old packages
+        apt:
+          name: "{{ package_remove }}"
+          state: absent
+
+      - name: ubuntu cache update
+        apt:
+          update_cache: yes
+        ignore_errors: true
+
+      - name: setup apt repository
+        apt:
+          name: "{{ item }}"
+          state: present
+        loop:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+
+      - name: Add Docker’s official GPG key
+        apt_key:
+          url: https://download.docker.com/linux/ubuntu/gpg
+          state: present
+
+      - name: Add Docker Repository
+        apt_repository:
+          repo: deb https://download.docker.com/linux/ubuntu bionic stable
+          state: present
+
+      - name: Install docker-ce
+        apt:
+          name: '{{ item }}'
+          state: present
+        loop:
+         - docker-ce
+         - docker-ce-cli
